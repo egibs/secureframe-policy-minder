@@ -44,7 +44,7 @@ Save the token starting with `xoxb-`, as you will need it to send messages.
 
 ## Usage
 
-You can run this app via the command-line or as a scheduled Github Action.
+You can run this app via the command-line or as a scheduled Github Action (see [examples](examples))
 
 ```
 usage:
