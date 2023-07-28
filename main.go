@@ -33,11 +33,11 @@ var (
 
 	dryRunFlag              = flag.Bool("dry-run", false, "dry-run mode")
 	sfTokenFlag             = flag.String("secureframe-token", "", "Secureframe bearer token")
-	companyIDFlag           = flag.String("company-id", "adcfb3c-0b58-4c2c-af04-43b1a5031d61", "secureframe company ID")
-	companyUserIDFlag       = flag.String("company-user-id", "079b854c-c53a-4c71-bfb8-f9e87b13b6c4", "secureframe company user ID")
+	companyUserIDFlag       = flag.String("company-user-id", "079b854c-c53a-4c71-bfb8-f9e87b13b6c4", `secureframe company user ID, returned by: sessionStorage.getItem("CURRENT_COMPANY_USER");`)
+	companyIDFlag           = flag.String("company-id", "", `optional override for the Secureframe company ID (autodetects)");`)
+	companyNameFlag         = flag.String("company-name", "", `optional override for the company name (autodetects)");`)
 	employeeTypesFlag       = flag.String("employee-types", "employee,contractor", "types of employees to contact")
 	robotNameFlag           = flag.String("robot-name", "ComplyBot3000", "name of the robot")
-	companyNameFlag         = flag.String("company-name", "Chainguard", "The name of your compnay")
 	securityTrainingURLFlag = flag.String("security-training-url", "https://securityawareness.usalearning.gov/cybersecurity/index.htm", "URL to security training")
 	helpChannelFlag         = flag.String("help-channel", "#security-and-compliance", "Slack channel for help")
 	testMessageTarget       = flag.String("test-message-target", "", "override destination and send a single test message to this person")
@@ -92,7 +92,7 @@ func messageText(m MessageContext) (string, error) {
 	return tpl.String(), nil
 }
 
-func nag(s *slack.Client, email string, needs []string) error {
+func nag(s *slack.Client, company string, email string, needs []string) error {
 	if s == nil {
 		log.Printf("would nag %s about %s, but no Slack client was setup.", email, needs)
 	}
@@ -105,7 +105,7 @@ func nag(s *slack.Client, email string, needs []string) error {
 		Needs:               needs,
 		FirstName:           u.Profile.FirstName,
 		HelpChannel:         *helpChannelFlag,
-		Company:             *companyNameFlag,
+		Company:             company,
 		SecurityTrainingURL: *securityTrainingURLFlag,
 		BotName:             *robotNameFlag,
 	})
@@ -140,7 +140,21 @@ func main() {
 		log.Printf("SLACK_TOKEN not set, won't actually post messages to Slack")
 	}
 
-	ppl, err := secureframe.Personnel(context.Background(), *companyIDFlag, *companyUserIDFlag, *sfTokenFlag)
+	ctx := context.Background()
+
+	cname := *companyNameFlag
+	cid := *companyIDFlag
+
+	if cname == "" || cid == "" {
+		co, err := secureframe.GetCompany(ctx, *companyUserIDFlag, *sfTokenFlag)
+		if err != nil {
+			log.Panicf("Secureframe company lookup failed: %v", err)
+		}
+		cname = co.Name
+		cid = co.ID
+	}
+
+	ppl, err := secureframe.Personnel(context.Background(), cid, *companyUserIDFlag, *sfTokenFlag)
 	if err != nil {
 		log.Panicf("Secureframe test query failed: %v", err)
 	}
@@ -169,11 +183,11 @@ func main() {
 
 		needs := []string{}
 		if !p.PoliciesAccepted {
-			needs = append(needs, "✅ Accept our latest policies at https://app.secureframe.com/onboard/employee/policies")
+			needs = append(needs, `✅ Accept our latest policies at https://app.secureframe.com/onboard/employee/policies`)
 		}
 		if !p.SecurityTrainingCompleted {
-			needs = append(needs, "🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}")
-			needs = append(needs, "⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)")
+			needs = append(needs, `🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}`)
+			needs = append(needs, `⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)`)
 		}
 
 		if len(needs) > 0 {
@@ -183,7 +197,7 @@ func main() {
 			if *testMessageTarget != "" {
 				email = *testMessageTarget
 			}
-			if err := nag(s, email, needs); err != nil {
+			if err := nag(s, cname, email, needs); err != nil {
 				log.Printf("failed to nag %s: %v", p.Email, err)
 			}
 			if *testMessageTarget != "" {
