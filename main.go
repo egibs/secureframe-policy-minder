@@ -156,6 +156,9 @@ func main() {
 		if !p.Invited {
 			continue
 		}
+		if !p.InAuditScope {
+			continue
+		}
 
 		eType := strings.ToLower(p.EmployeeType)
 		if !requiredTypes[eType] {
