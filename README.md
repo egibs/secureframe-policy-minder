@@ -1,6 +1,9 @@
 # secureframe-policy-minder
 
-EXPERIMENTAL - Send Slack reminders to Personnel to remind them to:
+[
+![secureframe-policy-minder](images/logo.jpg?raw=true "secureframe-policy-minder logo")
+
+Send Slack reminders to Personnel to remind them to:
 
 * Accept Policies
 * Upload proof of Security Training
@@ -33,5 +36,9 @@ go install github.com/chainguard-dev/secureframe-policy-minder@latest
 
 ## Slack App
 
-Scopes required: `chat:write`.
+Create a Slack app "From Scratch" at https://api.slack.com/apps
+
+- Scopes required: `chat:write`
+
+Save the token starting with `xoxb-`, as you will need it to send messages.
 
