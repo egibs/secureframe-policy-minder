@@ -172,8 +172,8 @@ func main() {
 			needs = append(needs, "Accept or re-accept our company policies at https://app.secureframe.com/onboard/employee/policies")
 		}
 		if !p.SecurityTrainingCompleted {
-			needs = append(needs, "Take the Cybersecurity Awareness Training at {{.SecurityTrainingURL}}")
-			needs = append(needs, "Upload proof of training completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)")
+			needs = append(needs, "Take Cybersecurity Awareness Training at {{.SecurityTrainingURL}} (annually)")
+			needs = append(needs, "Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)")
 		}
 
 		if len(needs) > 0 {
