@@ -132,13 +132,13 @@ func query(ctx context.Context, token string, in interface{}, out interface{}) e
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	log.Printf("response: %s", rb)
+	// log.Printf("response: %s", rb)
 
 	if err := json.Unmarshal(rb, out); err != nil {
 		return fmt.Errorf("unmarshal output: %w\ncontents: %s", err, rb)
 	}
 
-	log.Printf("parsed response: %+v", out)
+	// log.Printf("parsed response: %+v", out)
 	return nil
 }
 
