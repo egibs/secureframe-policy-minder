@@ -1,9 +1,7 @@
 {{.Greetings}}, {{.FirstName}}!
 
-I am {{.BotName}} 🤖, your _Policy Compliance Pal Who's Fun To Be With©_
+I am {{.BotName}} 🤖, your _Policy Compliance Pal Who's Fun To Be With©_. My job is to keep {{.Company}} conformant to the compliance frameworks that our customers require of us, such as SOC-2 and ISO 27001. Based on my records, I need your help with:
 
-My job is keeping {{.Company}} from spectacularly failing the compliance frameworks we track through Secureframe. Based on my records, I need your help with the following:
-
-{{ range .InterpretedNeeds}}✅ {{ . }}
+{{ range .InterpretedNeeds}}• {{ . }}
 {{ end }}
-Thank you for keeping {{.Company}} 🔥! If you have any questions, you can find my creators in {{.HelpChannel}}.
+These items will need to be refreshed annually. Thank you for keeping {{.Company}} 🔥! If you have questions, you can find my creators in {{.HelpChannel}}.
