@@ -31,3 +31,7 @@ As Secureframe does not yet have a public API, you'll need to grab the latter tw
 go install github.com/chainguard-dev/secureframe-policy-minder@latest
 ```
 
+## Slack App
+
+Scopes required: `chat:write`.
+
