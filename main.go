@@ -113,12 +113,14 @@ func nag(s *slack.Client, email string, needs []string) error {
 		return fmt.Errorf("message text: %w", err)
 	}
 
-	log.Printf("message to %s: %s", email, text)
 	if !*dryRunFlag {
+		log.Printf("posting message to %s: %s", email, text)
 		_, _, err := s.PostMessage(u.ID, slack.MsgOptionText(text, false))
 		if err != nil {
 			return fmt.Errorf("post message: %w", err)
 		}
+	} else {
+		log.Printf("DRY-RUN for %s: %s", email, text)
 	}
 	return nil
 }

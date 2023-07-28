@@ -39,27 +39,11 @@ type SearchCompanyUsersResult struct {
 }
 
 type Person struct {
-	AccessRole      any  `json:"accessRole"`
-	Active          bool `json:"active"`
-	BackgroundCheck struct {
-		ID          string `json:"id"`
-		Accepted    bool   `json:"accepted"`
-		CountryCode string `json:"countryCode"`
-		Typename    string `json:"__typename"`
-	} `json:"backgroundCheck"`
-	BackgroundCheckStatus string `json:"backgroundCheckStatus"`
-	BackgroundCheckExists bool   `json:"backgroundCheckExists"`
-	CanBeInvited          bool   `json:"canBeInvited"`
-	CcpaTrainingCompleted bool   `json:"ccpaTrainingCompleted"`
-	Company               struct {
-		BackgroundChecksSetup bool   `json:"backgroundChecksSetup"`
-		Typename              string `json:"__typename"`
-	} `json:"company"`
-	CompanyUserVendors []struct {
-		VendorName string `json:"vendorName"`
-		Active     bool   `json:"active"`
-		Typename   string `json:"__typename"`
-	} `json:"companyUserVendors"`
+	Active                              bool      `json:"active"`
+	BackgroundCheckStatus               string    `json:"backgroundCheckStatus"`
+	BackgroundCheckExists               bool      `json:"backgroundCheckExists"`
+	CanBeInvited                        bool      `json:"canBeInvited"`
+	CcpaTrainingCompleted               bool      `json:"ccpaTrainingCompleted"`
 	Email                               string    `json:"email"`
 	EmployeeType                        string    `json:"employeeType"`
 	EndDate                             any       `json:"endDate"`
@@ -86,18 +70,7 @@ type Person struct {
 	StartDate                           string    `json:"startDate"`
 	DepartmentID                        any       `json:"departmentId"`
 	Role                                string    `json:"role"`
-	TrainingGroups                      []struct {
-		ID       string `json:"id"`
-		Slug     string `json:"slug"`
-		Name     string `json:"name"`
-		Typename string `json:"__typename"`
-	} `json:"trainingGroups"`
-	User struct {
-		ID       string `json:"id"`
-		ImageURL string `json:"imageUrl"`
-		Typename string `json:"__typename"`
-	} `json:"user"`
-	Typename string `json:"__typename"`
+	Typename                            string    `json:"__typename"`
 }
 
 type payload struct {
@@ -182,30 +155,11 @@ func Personnel(ctx context.Context, companyID string, companyUserID string, toke
 			CompanyID:            companyID,
 		},
 		Query: `fragment PersonnelTabContentsCompanyUsers on CompanyUser {
-					accessRole {
-						name
-						__typename
-					}
 					active
-					backgroundCheck {
-						id
-						accepted
-						countryCode
-						__typename
-					}
 					backgroundCheckStatus
 					backgroundCheckExists
 					canBeInvited
 					ccpaTrainingCompleted
-					company {
-						backgroundChecksSetup
-						__typename
-					}
-					companyUserVendors {
-						vendorName
-						active
-						__typename
-					}
 					email
 					employeeType
 					endDate
@@ -232,17 +186,6 @@ func Personnel(ctx context.Context, companyID string, companyUserID string, toke
 					startDate
 					departmentId
 					role
-					trainingGroups {
-						id
-						slug: companyUserGroupSlug
-						name: companyUserGroupName
-						__typename
-					}
-					user {
-						id
-						imageUrl
-						__typename
-					}
 					__typename
 				}
 
