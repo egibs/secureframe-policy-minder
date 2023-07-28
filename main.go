@@ -130,12 +130,12 @@ func main() {
 
 	var s *slack.Client
 
-	token := os.Getenv("SLACK_POLICY_MINDER_TOKEN")
+	token := os.Getenv("SLACK_TOKEN")
 	if token != "" {
 		log.Printf("setting up slack client (%d byte token)", len(token))
 		s = slack.New(token)
 	} else {
-		log.Printf("SLACK_POLICY_MINDER_TOKEN not set, won't actually post messages to Slack")
+		log.Printf("SLACK_TOKEN not set, won't actually post messages to Slack")
 	}
 
 	ppl, err := secureframe.Personnel(context.Background(), *companyIDFlag, *companyUserIDFlag, *sfTokenFlag)
