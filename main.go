@@ -34,8 +34,6 @@ var (
 	dryRunFlag              = flag.Bool("dry-run", false, "dry-run mode")
 	sfTokenFlag             = flag.String("secureframe-token", "", "Secureframe bearer token")
 	companyUserIDFlag       = flag.String("company-user-id", "079b854c-c53a-4c71-bfb8-f9e87b13b6c4", `secureframe company user ID, returned by: sessionStorage.getItem("CURRENT_COMPANY_USER");`)
-	companyIDFlag           = flag.String("company-id", "", `optional override for the Secureframe company ID (autodetects)");`)
-	companyNameFlag         = flag.String("company-name", "", `optional override for the company name (autodetects)");`)
 	employeeTypesFlag       = flag.String("employee-types", "employee,contractor", "types of employees to contact")
 	robotNameFlag           = flag.String("robot-name", "ComplyBot3000", "name of the robot")
 	securityTrainingURLFlag = flag.String("security-training-url", "https://securityawareness.usalearning.gov/cybersecurity/index.htm", "URL to security training")
@@ -142,19 +140,12 @@ func main() {
 
 	ctx := context.Background()
 
-	cname := *companyNameFlag
-	cid := *companyIDFlag
-
-	if cname == "" || cid == "" {
-		co, err := secureframe.GetCompany(ctx, *companyUserIDFlag, *sfTokenFlag)
-		if err != nil {
-			log.Panicf("Secureframe company lookup failed: %v", err)
-		}
-		cname = co.Name
-		cid = co.ID
+	co, err := secureframe.GetCompany(ctx, *companyUserIDFlag, *sfTokenFlag)
+	if err != nil {
+		log.Panicf("Secureframe company lookup failed: %v", err)
 	}
 
-	ppl, err := secureframe.Personnel(context.Background(), cid, *companyUserIDFlag, *sfTokenFlag)
+	ppl, err := secureframe.Personnel(context.Background(), co.ID, *companyUserIDFlag, *sfTokenFlag)
 	if err != nil {
 		log.Panicf("Secureframe test query failed: %v", err)
 	}
@@ -197,7 +188,7 @@ func main() {
 			if *testMessageTarget != "" {
 				email = *testMessageTarget
 			}
-			if err := nag(s, cname, email, needs); err != nil {
+			if err := nag(s, co.Name, email, needs); err != nil {
 				log.Printf("failed to nag %s: %v", p.Email, err)
 			}
 			if *testMessageTarget != "" {

@@ -48,12 +48,8 @@ You can run this app via the command-line or as a scheduled Github Action.
 
 ```
 usage:
-  -company-id string
-    	secureframe company ID (default "adcfb3c-0b58-4c2c-af04-43b1a5031d61")
-  -company-name string
-    	The name of your compnay (default "Chainguard")
   -company-user-id string
-    	secureframe company user ID (default "079b854c-c53a-4c71-bfb8-f9e87b13b6c4")
+    	secureframe company user ID, returned by: sessionStorage.getItem("CURRENT_COMPANY_USER"); (default "079b854c-c53a-4c71-bfb8-f9e87b13b6c4")
   -dry-run
     	dry-run mode
   -employee-types string
