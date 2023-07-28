@@ -40,7 +40,7 @@ var (
 	companyNameFlag         = flag.String("company-name", "Chainguard", "The name of your compnay")
 	securityTrainingURLFlag = flag.String("security-training-url", "https://securityawareness.usalearning.gov/cybersecurity/index.htm", "URL to security training")
 	helpChannelFlag         = flag.String("help-channel", "#security-and-compliance", "Slack channel for help")
-	testMessageTarget       = flag.String("test-message-target", "", "send a single test message to this person")
+	testMessageTarget       = flag.String("test-message-target", "", "override destination and send a single test message to this person")
 
 	//go:embed message.tmpl
 	msgTmpl string
@@ -168,7 +168,7 @@ func main() {
 		}
 		if !p.SecurityTrainingCompleted {
 			needs = append(needs, "Take the Cybersecurity Awareness Training at {{.SecurityTrainingURL}}")
-			needs = append(needs, "Upload proof of completion for Cybersecurity Training to https://app.secureframe.com/onboard/employee/training")
+			needs = append(needs, "Upload proof of training completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)")
 		}
 
 		if len(needs) > 0 {
