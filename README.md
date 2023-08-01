@@ -14,8 +14,8 @@ NOTE: This is using an undocumented Secureframe GraphQL API, so it may suddenly 
 ## Requirements
 
 * A Slack Bot token 
-* A Secureframe API token (findable via browser headers)
-* A Secureframe Company ID (findable via browser headers)
+* A Secureframe API token (discoverable via browser headers)
+* A Secureframe Company ID (discoverable via browser headers)
 
 As Secureframe does not yet have a public API, you'll need to grab the latter two bits of information using your browser's Developer Tools functionality.
 
@@ -24,9 +24,8 @@ As Secureframe does not yet have a public API, you'll need to grab the latter tw
 1. Visit <https://app.secureframe.com/>
 2. Enter your browser's "Developer Tools" feature
 3. Click on the **Console** tab.
-4. Type `sessionStorage.getItem("AUTH_TOKEN");` and press <enter>. This will show your auth token.
-5. Type `sessionStorage.getItem("CURRENT_COMPANY_USER");` and press <enter>. This will show your company use ID.
-6. 
+4. Type `sessionStorage.getItem("AUTH_TOKEN");` and press [enter]. This will show your auth token.
+5. Type `sessionStorage.getItem("CURRENT_COMPANY_USER");` and press [enter]. This will show your company use ID.
 
 ## Installation
 
