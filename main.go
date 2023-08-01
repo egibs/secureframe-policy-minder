@@ -91,17 +91,24 @@ func messageText(m MessageContext) (string, error) {
 }
 
 func nag(s *slack.Client, company string, email string, needs []string) error {
+	firstName := "Unknown"
+	uid := "unknown"
+
 	if s == nil {
 		log.Printf("would nag %s about %s, but no Slack client was setup.", email, needs)
+	} else {
+		u, err := s.GetUserByEmail(email)
+		if err != nil {
+			return fmt.Errorf("get user by email: %w", err)
+		}
+		log.Printf("found user: %+v", u)
+		firstName = u.Profile.FirstName
+		uid = u.ID
 	}
-	u, err := s.GetUserByEmail(email)
-	if err != nil {
-		return fmt.Errorf("get user by email: %w", err)
-	}
-	log.Printf("found user: %+v", u)
+
 	text, err := messageText(MessageContext{
 		Needs:               needs,
-		FirstName:           u.Profile.FirstName,
+		FirstName:           firstName,
 		HelpChannel:         *helpChannelFlag,
 		Company:             company,
 		SecurityTrainingURL: *securityTrainingURLFlag,
@@ -113,7 +120,7 @@ func nag(s *slack.Client, company string, email string, needs []string) error {
 
 	if !*dryRunFlag {
 		log.Printf("posting message to %s: %s", email, text)
-		_, _, err := s.PostMessage(u.ID, slack.MsgOptionText(text, false))
+		_, _, err := s.PostMessage(uid, slack.MsgOptionText(text, false))
 		if err != nil {
 			return fmt.Errorf("post message: %w", err)
 		}
