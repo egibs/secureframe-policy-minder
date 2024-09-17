@@ -108,33 +108,20 @@ func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]
 
 	// Filter out compliant users and only store users with overdue or incomplete training
 	for _, d := range data {
-		active := d.Attributes.Active
-		email := d.Attributes.Email
-		id := d.Attributes.ID
-		inScope := d.Attributes.InAuditScope
-		invited := d.Attributes.Invited
-		name := d.Attributes.Name
-		onboardingStatus := d.Attributes.OnboardingStatus
-		personnelStatus := d.Attributes.PersonnelStatus
+		_, validUser := requiredTypes[d.Attributes.EmployeeType]
+		noncompliant := d.Attributes.PersonnelStatus != "all_tasks_completed"
 
-		var employeeType string
-		if d.Attributes.EmployeeType != "" {
-			employeeType = d.Attributes.EmployeeType
-		}
-
-		_, validUser := requiredTypes[employeeType]
-		noncompliant := personnelStatus != "all_tasks_completed"
-
-		// Store the user's ID as a key
-		// Store their name, email, employee type, onboarding status, and personnel status as values
-		if all(active, invited, inScope, validUser, noncompliant) {
+		// If the user is active, invited, in the audit scope, a valid user, and noncompliant:
+		// - store the user's ID as a key
+		// - store their name, email, employee type, onboarding status, and personnel status as values
+		if all(d.Attributes.Active, d.Attributes.Invited, d.Attributes.InAuditScope, validUser, noncompliant) {
 			// Initialize the value map
-			users[id] = make(map[string]string)
-			users[id]["name"] = name
-			users[id]["email"] = email
-			users[id]["employee_type"] = employeeType
-			users[id]["onboarding_status"] = onboardingStatus
-			users[id]["personnel_status"] = personnelStatus
+			users[d.Attributes.ID] = make(map[string]string)
+			users[d.Attributes.ID]["name"] = d.Attributes.Name
+			users[d.Attributes.ID]["email"] = d.Attributes.Email
+			users[d.Attributes.ID]["employee_type"] = d.Attributes.EmployeeType
+			users[d.Attributes.ID]["onboarding_status"] = d.Attributes.OnboardingStatus
+			users[d.Attributes.ID]["personnel_status"] = d.Attributes.PersonnelStatus
 		}
 	}
 
