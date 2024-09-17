@@ -147,7 +147,7 @@ func main() {
 
 	ctx := context.Background()
 
-	ppl, err := secureframe.GetUsers(ctx, *accessKeyFlag, *secretKeyFlag, *employeeTypesFlag)
+	ppl, err := secureframe.Users(ctx, *accessKeyFlag, *secretKeyFlag, *employeeTypesFlag)
 	if err != nil {
 		log.Panicf("Failed to get Secureframe users: %v", err)
 	}

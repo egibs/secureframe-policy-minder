@@ -2,20 +2,60 @@ package secureframe
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
-
-	"github.com/Jeffail/gabs/v2"
+	"time"
 )
 
 const (
 	restEndpoint = "https://api.secureframe.com"
 )
 
+type User struct {
+	Data []struct {
+		ID         string `json:"id"`
+		Type       string `json:"type"`
+		Attributes struct {
+			CreatedAt                      time.Time `json:"created_at"`
+			UpdatedAt                      time.Time `json:"updated_at"`
+			ID                             string    `json:"id"`
+			Active                         bool      `json:"active"`
+			ActiveSource                   any       `json:"active_source"`
+			DepartmentID                   any       `json:"department_id"`
+			EmployeeType                   string    `json:"employee_type"`
+			EndDate                        any       `json:"end_date"`
+			InAuditScope                   bool      `json:"in_audit_scope"`
+			Invited                        bool      `json:"invited"`
+			InvitedAt                      time.Time `json:"invited_at"`
+			OnboardingStatus               string    `json:"onboarding_status"`
+			PersonnelStatus                string    `json:"personnel_status"`
+			Role                           string    `json:"role"`
+			SecureframeAgentAcknowledgedAt any       `json:"secureframe_agent_acknowledged_at"`
+			StartDate                      string    `json:"start_date"`
+			Title                          any       `json:"title"`
+			AccessRole                     any       `json:"access_role"`
+			Email                          string    `json:"email"`
+			FirstName                      string    `json:"first_name"`
+			ImageURL                       any       `json:"image_url"`
+			LastName                       string    `json:"last_name"`
+			ManagerName                    any       `json:"manager_name"`
+			MiddleName                     string    `json:"middle_name"`
+			Name                           string    `json:"name"`
+			PreferredFirstName             any       `json:"preferred_first_name"`
+		} `json:"attributes"`
+		Relationships struct {
+		} `json:"relationships"`
+		Links struct {
+			Self string `json:"self"`
+		} `json:"links"`
+	} `json:"data"`
+}
+
 // makeRequest performs an authenticated HTTP request to the specified endpoint and returns a JSON-friendly byte slice.
-func makeRequest(ctx context.Context, url, method, accessKey, secretKey string) ([]byte, error) {
+func request(ctx context.Context, url, method, accessKey, secretKey string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		return nil, err
@@ -41,8 +81,8 @@ func makeRequest(ctx context.Context, url, method, accessKey, secretKey string) 
 	return rb, nil
 }
 
-// GetUsers returns a map of noncompliant users and related information.
-func GetUsers(ctx context.Context, accessKey, secretKey, types string) (map[string]map[string]string, error) {
+// Users returns a map of noncompliant users and related information.
+func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]map[string]string, error) {
 	// User types to consider as valid
 	requiredTypes := make(map[string]bool)
 	for _, t := range strings.Split(types, ",") {
@@ -54,34 +94,32 @@ func GetUsers(ctx context.Context, accessKey, secretKey, types string) (map[stri
 
 	requestUrl := fmt.Sprintf("%s/users", restEndpoint)
 
-	rb, err := makeRequest(ctx, requestUrl, "GET", accessKey, secretKey)
+	rb, err := request(ctx, requestUrl, "GET", accessKey, secretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// Parse response bytes using Gabs to avoid defining structs
-	r, err := gabs.ParseJSON(rb)
-	if err != nil {
+	out := User{}
+	if err := json.Unmarshal(rb, &out); err != nil {
 		return nil, err
 	}
 
-	// All of the users are stored in a `data` array
-	data := r.Path("data").Children()
+	data := out.Data
 
 	// Filter out compliant users and only store users with overdue or incomplete training
 	for _, d := range data {
-		active := d.Path("attributes.active").Data().(bool)
-		email := d.Path("attributes.email").Data().(string)
-		id := d.Path("attributes.id").Data().(string)
-		inScope := d.Path("attributes.in_audit_scope").Data().(bool)
-		invited := d.Path("attributes.invited").Data().(bool)
-		name := d.Path("attributes.name").Data().(string)
-		onboardingStatus := d.Path("attributes.onboarding_status").Data().(string)
-		personnelStatus := d.Path("attributes.personnel_status").Data().(string)
+		active := d.Attributes.Active
+		email := d.Attributes.Email
+		id := d.Attributes.ID
+		inScope := d.Attributes.InAuditScope
+		invited := d.Attributes.Invited
+		name := d.Attributes.Name
+		onboardingStatus := d.Attributes.OnboardingStatus
+		personnelStatus := d.Attributes.PersonnelStatus
 
 		var employeeType string
-		if d.Path("attributes.employee_type").Data() != nil {
-			employeeType = d.Path("attributes.employee_type").Data().(string)
+		if d.Attributes.EmployeeType != "" {
+			employeeType = d.Attributes.EmployeeType
 		}
 
 		_, validUser := requiredTypes[employeeType]
