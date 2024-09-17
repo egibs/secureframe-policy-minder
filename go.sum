@@ -1,3 +1,5 @@
+github.com/Jeffail/gabs/v2 v2.7.0 h1:Y2edYaTcE8ZpRsR2AtmPu5xQdFDIthFG0jYhu5PY8kg=
+github.com/Jeffail/gabs/v2 v2.7.0/go.mod h1:dp5ocw1FvBBQYssgHsG7I1WYsiLRtkUaB1FEtSwvNUw=
 github.com/danott/envflag v0.0.0-20161011012248-14c5f9aaa227 h1:6Qy0Hro+Vg33OMZ4Ig59rrD4/qmN8Bt3KocbaDjK0NU=
 github.com/danott/envflag v0.0.0-20161011012248-14c5f9aaa227/go.mod h1:h8yo6pgwS8oNUTM8l2tGcnOtq+i7F1/PrRCPMR1kDRA=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

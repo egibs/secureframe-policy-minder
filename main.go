@@ -10,7 +10,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/chainguard-dev/secureframe-policy-minder/pkg/secureframe"
@@ -31,13 +30,14 @@ var (
 		"Shalom",
 	}
 
+	accessKeyFlag           = flag.String("access-key", "", "Secureframe Access Key")
+	companyFlag             = flag.String("company", "", "Company name used for notifications")
 	dryRunFlag              = flag.Bool("dry-run", false, "dry-run mode")
-	sfTokenFlag             = flag.String("secureframe-token", "", "Secureframe bearer token")
-	companyUserIDFlag       = flag.String("company-user-id", "079b854c-c53a-4c71-bfb8-f9e87b13b6c4", `secureframe company user ID, returned by: sessionStorage.getItem("CURRENT_COMPANY_USER");`)
 	employeeTypesFlag       = flag.String("employee-types", "employee,contractor", "types of employees to contact")
-	robotNameFlag           = flag.String("robot-name", "ComplyBot3000", "name of the robot")
-	securityTrainingURLFlag = flag.String("security-training-url", "https://securityawareness.usalearning.gov/cybersecurity/index.htm", "URL to security training")
 	helpChannelFlag         = flag.String("help-channel", "#security-and-compliance", "Slack channel for help")
+	robotNameFlag           = flag.String("robot-name", "ComplyBot3000", "name of the robot")
+	secretKeyFlag           = flag.String("secret-key", "", "Secureframe Secret Key")
+	securityTrainingURLFlag = flag.String("security-training-url", "https://securityawareness.usalearning.gov/cybersecurity/index.htm", "URL to security training")
 	testMessageTarget       = flag.String("test-message-target", "", "override destination and send a single test message to this person")
 
 	//go:embed message.tmpl
@@ -90,7 +90,7 @@ func messageText(m MessageContext) (string, error) {
 	return tpl.String(), nil
 }
 
-func nag(s *slack.Client, company string, email string, needs []string) error {
+func remind(s *slack.Client, company string, email string, needs []string) error {
 	firstName := "Unknown"
 	uid := "unknown"
 
@@ -147,56 +147,38 @@ func main() {
 
 	ctx := context.Background()
 
-	co, err := secureframe.GetCompany(ctx, *companyUserIDFlag, *sfTokenFlag)
+	ppl, err := secureframe.GetUsers(ctx, *accessKeyFlag, *secretKeyFlag, *employeeTypesFlag)
 	if err != nil {
-		log.Panicf("Secureframe company lookup failed: %v", err)
-	}
-
-	ppl, err := secureframe.Personnel(context.Background(), co.ID, *companyUserIDFlag, *sfTokenFlag)
-	if err != nil {
-		log.Panicf("Secureframe test query failed: %v", err)
+		log.Panicf("Failed to get Secureframe users: %v", err)
 	}
 	log.Printf("PPL: -- %+v -- ", ppl)
 
-	requiredTypes := map[string]bool{}
-	for _, t := range strings.Split(*employeeTypesFlag, ",") {
-		requiredTypes[strings.ToLower(t)] = true
-	}
+	for _, info := range ppl {
+		// Instructions to be populated based on the user's onboarding status
+		var needs []string
 
-	for _, p := range ppl {
-		if !p.Active {
-			continue
-		}
-		if !p.Invited {
-			continue
-		}
-		if !p.InAuditScope {
-			continue
-		}
-
-		eType := strings.ToLower(p.EmployeeType)
-		if !requiredTypes[eType] {
-			continue
-		}
-
-		needs := []string{}
-		if !p.PoliciesAccepted {
+		// Account for users with training that has not started or with outstanding security training
+		switch info["onboarding_status"] {
+		case "not_started":
 			needs = append(needs, `✅ Accept our latest policies at https://app.secureframe.com/onboard/employee/policies`)
-		}
-		if !p.SecurityTrainingCompleted {
 			needs = append(needs, `🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}`)
 			needs = append(needs, `⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)`)
+		case "security_training":
+			needs = append(needs, `🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}`)
+			needs = append(needs, `⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)`)
+		default:
+			continue
 		}
 
 		if len(needs) > 0 {
-			log.Printf("%s needs %s", p.Email, needs)
+			email := info["email"]
+			log.Printf("%s needs %s", email, needs)
 
-			email := p.Email
 			if *testMessageTarget != "" {
 				email = *testMessageTarget
 			}
-			if err := nag(s, co.Name, email, needs); err != nil {
-				log.Printf("failed to nag %s: %v", p.Email, err)
+			if err := remind(s, *companyFlag, email, needs); err != nil {
+				log.Printf("failed to nag %s: %v", email, err)
 			}
 			if *testMessageTarget != "" {
 				log.Printf("sent test message, exiting")
