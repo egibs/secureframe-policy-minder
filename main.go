@@ -155,7 +155,7 @@ func main() {
 
 	for _, info := range ppl {
 		// Instructions to be populated based on the user's onboarding status
-		var needs []string
+		needs := []string{}
 
 		// Account for users with training that has not started or with outstanding security training
 		switch info["onboarding_status"] {
