@@ -157,21 +157,33 @@ func main() {
 		// Instructions to be populated based on the user's onboarding status
 		needs := []string{}
 
+		var end, start time.Time
+		if remindDates, ok := info["remind_dates"].(map[string]time.Time); ok {
+			start = remindDates["start"]
+			end = remindDates["end"]
+		}
+
 		// Account for users with training that has not started or with outstanding security training
 		switch info["onboarding_status"] {
 		case "not_started":
 			needs = append(needs, `✅ Accept our latest policies at https://app.secureframe.com/onboard/employee/policies`)
 			needs = append(needs, `🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}`)
 			needs = append(needs, `⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)`)
+			if !start.IsZero() && !end.IsZero() {
+				needs = append(needs, fmt.Sprintf("Accept the policies and provide proof between %v and %v", start.Format(time.RFC850), end.Format(time.RFC850)))
+			}
 		case "security_training":
 			needs = append(needs, `🏋️‍♀️ Take Cybersecurity training at {{.SecurityTrainingURL}}`)
 			needs = append(needs, `⬆️ Upload proof of completion to https://app.secureframe.com/onboard/employee/training (PDF or screenshot)`)
+			if !start.IsZero() && !end.IsZero() {
+				needs = append(needs, fmt.Sprintf("Upload proof between %v and %v", start.Format(time.RFC850), end.Format(time.RFC850)))
+			}
 		default:
 			continue
 		}
 
 		if len(needs) > 0 {
-			email := info["email"]
+			email := info["email"].(string)
 			log.Printf("%s needs %s", email, needs)
 
 			if *testMessageTarget != "" {

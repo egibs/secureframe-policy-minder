@@ -81,8 +81,49 @@ func request(ctx context.Context, url, method, accessKey, secretKey string) ([]b
 	return rb, nil
 }
 
+// nextFive returns the next five reminder windows (start and end dates).
+func nextFive(currentTime time.Time, invitedAt time.Time) map[int]map[string]time.Time {
+	dates := make(map[int]map[string]time.Time)
+	start := invitedAt.AddDate(0, 0, 354)
+	end := start.AddDate(0, 0, 10)
+
+	for i := 0; i < 5; i++ {
+		start = start.AddDate(0, 0, 354)
+		end = start.AddDate(0, 0, 10)
+
+		if !currentTime.After(end) {
+			dates[i] = map[string]time.Time{
+				"start": start,
+				"end":   end,
+			}
+		}
+	}
+
+	// Test the logic by uncommenting the following lines
+	// dates[5] = map[string]time.Time{
+	// 	"start": currentTime.AddDate(0, 0, -1),
+	// 	"end":   currentTime.AddDate(0, 0, 10),
+	// }
+
+	return dates
+}
+
+// validDate checks whether the given time falls within two dates.
+// the two dates are stored in a map of integers with "start" and "end" keys with time values
+func validDate(date time.Time, dates map[int]map[string]time.Time) (map[string]time.Time, bool) {
+	for i := range len(dates) {
+		start := dates[i]["start"]
+		end := dates[i]["end"]
+
+		if date.After(start) && date.Before(end) {
+			return dates[i], true
+		}
+	}
+	return nil, false
+}
+
 // Users returns a map of noncompliant users and related information.
-func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]map[string]string, error) {
+func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]map[string]any, error) {
 	// User types to consider as valid
 	requiredTypes := make(map[string]bool)
 	for _, t := range strings.Split(types, ",") {
@@ -90,7 +131,7 @@ func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]
 	}
 
 	// Store a map containing [unique] user IDs and their respective attributes
-	users := make(map[string]map[string]string)
+	users := make(map[string]map[string]any)
 
 	requestUrl := fmt.Sprintf("%s/users", restEndpoint)
 
@@ -111,17 +152,39 @@ func Users(ctx context.Context, accessKey, secretKey, types string) (map[string]
 		_, validUser := requiredTypes[d.Attributes.EmployeeType]
 		noncompliant := d.Attributes.PersonnelStatus != "all_tasks_completed"
 
-		// If the user is active, invited, in the audit scope, a valid user, and noncompliant:
+		// Do some future-looking calculations to determine whether a user should be notified
+		// The only date exposed by the REST API is the user's invited date
+		// Take the invited date and calculate the next five years of notifications
+		// The notifications will be sent within the range t + (354) < n < t + (364) to provide a 10-day window
+		invitedAt := d.Attributes.InvitedAt
+
+		// Capture the current time
+		currentTime := time.Now()
+
+		// Retrieve the next five reminder windows
+		nextFive := nextFive(currentTime, invitedAt)
+
+		// If the user is:
+		// - active, invited, in the audit scope, a valid user, noncompliant, and within the remindStart and remindEnd window, remind the user then:
 		// - store the user's ID as a key
 		// - store their name, email, employee type, onboarding status, and personnel status as values
-		if all(d.Attributes.Active, d.Attributes.Invited, d.Attributes.InAuditScope, validUser, noncompliant) {
+		remindDates, inWindow := validDate(currentTime, nextFive)
+
+		if all(d.Attributes.Active, d.Attributes.Invited, d.Attributes.InAuditScope, validUser, noncompliant, inWindow) {
 			// Initialize the value map
-			users[d.Attributes.ID] = make(map[string]string)
-			users[d.Attributes.ID]["name"] = d.Attributes.Name
-			users[d.Attributes.ID]["email"] = d.Attributes.Email
-			users[d.Attributes.ID]["employee_type"] = d.Attributes.EmployeeType
-			users[d.Attributes.ID]["onboarding_status"] = d.Attributes.OnboardingStatus
-			users[d.Attributes.ID]["personnel_status"] = d.Attributes.PersonnelStatus
+			// Use any to store strings and the dates
+			users[d.Attributes.ID] = map[string]any{
+				"name":              d.Attributes.Name,
+				"email":             d.Attributes.Email,
+				"employee_type":     d.Attributes.EmployeeType,
+				"onboarding_status": d.Attributes.OnboardingStatus,
+				"personnel_status":  d.Attributes.PersonnelStatus,
+			}
+
+			// Prevent any nil panics
+			if remindDates != nil {
+				users[d.Attributes.ID]["remind_dates"] = remindDates
+			}
 		}
 	}
 
